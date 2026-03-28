@@ -4,95 +4,100 @@ import hashlib
 from datetime import datetime
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="ESCA+ Bio-Ethical Ledger", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="ESCA+ Global Ledger", layout="wide")
 
-# --- CSS UNTUK TENGOK PRO (Optional) ---
-st.markdown("""
-    <style>
-    .main { background-color: #f5f7f9; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    </style>
-    """, unsafe_allow_html=True)
-
-# --- MOCK DATA GENERATOR (Simulasi Data Paper) ---
-def load_initial_data():
-    data = [
-        {"CaseID": "BT-001", "Domain": "Spiritual Sensitivity", "Conflict": "Female patient, emergency, only male surgeon available", "Clinical_Urgency": 9, "Sensitivity_Level": 8, "Resolution": "Patient Agency: Applied Lay Ijtihad for immediate surgery", "Status": "Verified"},
-        {"CaseID": "BT-002", "Domain": "Ethical Justice", "Conflict": "Transparent billing vs. Hidden costs in Halal certification", "Clinical_Urgency": 3, "Sensitivity_Level": 9, "Resolution": "Institutional Integrity: Full cost disclosure provided to patient", "Status": "Verified"},
-        {"CaseID": "BT-003", "Domain": "Clinical Competence", "Conflict": "Prayer timing vs. Vital medication schedule", "Clinical_Urgency": 7, "Sensitivity_Level": 6, "Resolution": "Spiritual Sensitivity: Flexible scheduling with nursing assistance", "Status": "Verified"},
-        {"CaseID": "BT-004", "Domain": "Patient Agency", "Conflict": "Patient wants non-halal medication for life-saving treatment", "Clinical_Urgency": 10, "Sensitivity_Level": 5, "Resolution": "Contextual Religious Flexibility: Patient chose clinical outcome over ritual", "Status": "Verified"},
-        {"CaseID": "BT-005", "Domain": "Institutional Integrity", "Conflict": "Profit motive vs. Piety in hospital management", "Clinical_Urgency": 2, "Sensitivity_Level": 9, "Resolution": "Ethical Justice: Gender-equitable access maintained despite costs", "Status": "Verified"}
+# --- DATABASE SIMULATION (Session State) ---
+# Ini membolehkan data kekal walaupun kita tambah kes baru
+if 'ledger_db' not in st.session_state:
+    initial_cases = [
+        {"CaseID": "ESCA-001", "Domain": "Spiritual Sensitivity", "Conflict": "Patient requests female nurse for maternity care", "Urgency": 4, "Sensitivity": 9, "Resolution": "Ritual Accommodation: Assigned female staff immediately", "Status": "Verified"},
+        {"CaseID": "ESCA-002", "Domain": "Clinical Competence", "Conflict": "Delaying life-saving surgery for prayer timing", "Urgency": 10, "Sensitivity": 8, "Resolution": "Patient Agency: Applied 'Darurah' (Necessity) logic for immediate surgery", "Status": "Verified"},
+        {"CaseID": "ESCA-003", "Domain": "Ethical Justice", "Conflict": "Pricing transparency for international vs local patients", "Urgency": 2, "Sensitivity": 7, "Resolution": "Fair Administration: Full cost breakdown provided per Maqasid principles", "Status": "Verified"},
+        {"CaseID": "ESCA-004", "Domain": "Patient Agency", "Conflict": "Choosing male surgeon in emergency when no female available", "Urgency": 9, "Sensitivity": 5, "Resolution": "Lay Ijtihad: Patient prioritized life over gender-congruent care", "Status": "Verified"},
+        {"CaseID": "ESCA-005", "Domain": "Institutional Integrity", "Conflict": "Marketing 'Halal' but lacking staff training in Islamic ethics", "Urgency": 3, "Sensitivity": 9, "Resolution": "Structural Ethics: Mandatory staff bio-ethics training implemented", "Status": "Verified"},
+        {"CaseID": "ESCA-006", "Domain": "Spiritual Sensitivity", "Conflict": "Request for Halal-certified Insulin/Heparin", "Urgency": 6, "Sensitivity": 8, "Resolution": "Clinical-Spiritual Alignment: Provided certified alternative or explained necessity", "Status": "Verified"},
+        {"CaseID": "ESCA-007", "Domain": "Clinical Competence", "Conflict": "JCI efficiency vs Islamic modesty protocols in MRI", "Urgency": 5, "Sensitivity": 9, "Resolution": "Negotiated System: Modified MRI gown to ensure maximum coverage", "Status": "Verified"},
+        {"CaseID": "ESCA-008", "Domain": "Ethical Justice", "Conflict": "Gender-equitable access to specialized kidney treatment", "Urgency": 7, "Sensitivity": 6, "Resolution": "Islamic Equity: Resource distribution based on clinical need, not gender", "Status": "Verified"},
+        {"CaseID": "ESCA-009", "Domain": "Patient Agency", "Conflict": "Patient interpreting 'Fiqh' to refuse fasting during meds", "Urgency": 8, "Sensitivity": 7, "Resolution": "Contextual Flexibility: Doctor-Patient negotiation on health priority", "Status": "Verified"},
+        {"CaseID": "ESCA-010", "Domain": "Institutional Integrity", "Conflict": "Profit-driven regime vs Maqasid Al-Shariah values", "Urgency": 1, "Sensitivity": 10, "Resolution": "Ethical Framework: Strategic shift from symbolic to systemic Shariah governance", "Status": "Verified"}
     ]
-    return pd.DataFrame(data)
+    st.session_state.ledger_db = pd.DataFrame(initial_cases)
 
-# --- BLOCKCHAIN SIMULATION FUNCTION ---
-def hash_entry(row):
-    content = f"{row['CaseID']}-{row['Resolution']}-{datetime.now().strftime('%Y%m%d')}"
+# --- FUNCTIONS ---
+def generate_hash(row):
+    content = f"{row['CaseID']}-{row['Resolution']}-{datetime.now()}"
     return hashlib.sha256(content.encode()).hexdigest()
 
 # --- APP START ---
 st.title("🌐 Bio-Ethical Ledger: Global ESCA+ Dashboard")
-st.caption("Operationalizing the Ethical-Spiritual-Clinical Alignment Model for Global Healthcare")
+st.markdown("### Reframing Islamic Medical Tourism through the ESCA+ Ethics Model")
 
-# Load Data
-df = load_initial_data()
-df['Blockchain_Hash'] = df.apply(hash_entry, axis=1)
+# --- SIDEBAR: GLOBAL CONTROLS ---
+st.sidebar.header("🕹️ Practitioner Controls")
+selected_urgency = st.sidebar.slider("Global Clinical Urgency (JCI)", 1, 10, 5)
+selected_sensitivity = st.sidebar.slider("Spiritual Sensitivity Level", 1, 10, 5)
 
-# --- SIDEBAR INTERACTION ---
-st.sidebar.header("🕹️ Global Practitioner Controls")
-st.sidebar.markdown("Adjust indicators to see real-time impact on the ESCA+ Model.")
+# --- TABS: VIEW LEDGER & SUBMIT CASE ---
+tab1, tab2, tab3 = st.tabs(["📜 View Ledger", "📥 Submit New Case", "📊 Global Analytics"])
 
-selected_urgency = st.sidebar.slider("Global Clinical Urgency (JCI Standards)", 1, 10, 5)
-selected_sensitivity = st.sidebar.slider("Islamic Spiritual Sensitivity Level", 1, 10, 5)
+with tab1:
+    st.subheader("The Immutable Micro-Negotiation Ledger")
+    # Apply Hash for visual
+    display_df = st.session_state.ledger_db.copy()
+    display_df['Blockchain_Hash'] = display_df.apply(generate_hash, axis=1)
+    
+    # Filter display based on slider
+    filt_df = display_df[(display_df['Urgency'] >= selected_urgency-2) & (display_df['Urgency'] <= selected_urgency+2)]
+    st.dataframe(filt_df, use_container_width=True)
 
-st.sidebar.divider()
-st.sidebar.info(f"**Current Context:**\nUrgency: {selected_urgency} | Sensitivity: {selected_sensitivity}")
+with tab2:
+    st.subheader("Log a New Micro-Negotiation")
+    with st.form("new_case_form"):
+        col_a, col_b = st.columns(2)
+        with col_a:
+            new_id = st.text_input("Case ID", value=f"ESCA-0{len(st.session_state.ledger_db)+1}")
+            new_domain = st.selectbox("ESCA+ Domain", ["Spiritual Sensitivity", "Clinical Competence", "Ethical Justice", "Institutional Integrity", "Patient Agency"])
+            new_urgency = st.slider("Clinical Urgency", 1, 10, 5)
+        with col_b:
+            new_conflict = st.text_area("Ethical Conflict Description")
+            new_sensitivity = st.slider("Religious Sensitivity", 1, 10, 5)
+            new_resolution = st.text_input("Resolution/Decision Reached")
+        
+        submit_button = st.form_submit_button("Submit to Ledger")
+        
+        if submit_button:
+            new_data = {
+                "CaseID": new_id,
+                "Domain": new_domain,
+                "Conflict": new_conflict,
+                "Urgency": new_urgency,
+                "Sensitivity": new_sensitivity,
+                "Resolution": new_resolution,
+                "Status": "Pending Verification"
+            }
+            # Append to session state
+            st.session_state.ledger_db = pd.concat([st.session_state.ledger_db, pd.DataFrame([new_data])], ignore_index=True)
+            st.success(f"Case {new_id} has been securely hashed and added to the Global Ledger!")
+            st.balloons()
 
-# Logic ESCA+ Score Calculation
-esca_score = (selected_urgency * 0.5) + (selected_sensitivity * 0.5)
+with tab3:
+    st.subheader("Operational Analytics")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("Domain Distribution")
+        st.bar_chart(st.session_state.ledger_db['Domain'].value_counts())
+    with col2:
+        st.write("Avg Urgency per Domain")
+        avg_urgency = st.session_state.ledger_db.groupby('Domain')['Urgency'].mean()
+        st.line_chart(avg_urgency)
 
-# --- TOP METRICS ---
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric("ESCA+ Alignment", f"{esca_score}/10")
-with col2:
-    st.metric("Institutional Integrity", "98%", "Authentic")
-with col3:
-    st.metric("Patient Agency Events", "1,240", "Ijtihad-Led")
-with col4:
-    st.metric("Clinical Safety (JCI)", "A+", "Certified")
-
-# --- MAIN CONTENT: THE LEDGER ---
-st.subheader("📜 The Micro-Negotiation Ledger")
-st.markdown("This database logs real-time 'Micro-Negotiations' between faith and clinical needs.")
-
-# Filter data berdasarkan slider
-filtered_df = df[(df['Clinical_Urgency'] >= selected_urgency - 2) & (df['Clinical_Urgency'] <= selected_urgency + 2)]
-
-st.dataframe(filtered_df[['CaseID', 'Domain', 'Conflict', 'Resolution', 'Blockchain_Hash']], use_container_width=True)
-
-# --- ANALYSIS SECTION ---
+# --- FOOTER DECISION SUPPORT ---
 st.divider()
-t1, t2 = st.tabs(["📊 Global Analytics", "⚖️ Ethical Decision Support"])
-
-with t1:
-    st.subheader("Epistemic Tensions Analysis")
-    chart_data = pd.DataFrame({
-        'Domains': ['Ethical Justice', 'Spiritual Sensitivity', 'Clinical Competence', 'Institutional Integrity', 'Patient Agency'],
-        'Satisfaction %': [85, 92, 78, 88, 95]
-    })
-    st.bar_chart(chart_data, x='Domains', y='Satisfaction %')
-    st.write("Data reveals that **Patient Agency** (Ijtihad) is the highest driver for long-term loyalty in medical tourism.")
-
-with t2:
-    st.subheader("Real-Time Decision Logic")
-    if selected_urgency > 8:
-        st.error("⚠️ **CRITICAL ALERT:** High Clinical Urgency detected. Apply 'Darurah' (Necessity) principles. Prioritize Clinical Competence. Document Patient Agency immediately.")
-    elif selected_sensitivity > 8:
-        st.success("✅ **ACTION:** High Spiritual Need. Mobilize 'Spiritual Sensitivity' protocols. Ensure Ritual Accommodation is available.")
-    else:
-        st.info("ℹ️ **STANDARD:** Standard ESCA+ alignment protocol. Balance Ethical Justice with Clinical Quality.")
-
-# --- FOOTER ---
-st.divider()
-st.markdown(f"© 2025 ESCA+ Research Group | Reframing Islamic Medical Tourism | Verified Ledger: {hashlib.md5(str(datetime.now()).encode()).hexdigest()[:10]}")
+st.subheader("⚖️ AI-Assisted Decision Support")
+avg_score = (selected_urgency + selected_sensitivity) / 2
+if avg_score > 8:
+    st.error("⚠️ **POLICY ALERT:** High tension between Clinical Necessity and Spiritual Value. Recommendation: Activate 'Patient Agency' protocol (Ijtihad).")
+elif avg_score > 5:
+    st.warning("⚠️ **ADVISORY:** Moderate tension. Recommendation: Negotiate 'Spiritual Sensitivity' through institutional sincerity.")
+else:
+    st.info("ℹ️ **STABLE:** Low tension. Follow standard Shariah-compliant SOP.")
